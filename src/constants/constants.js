@@ -30,6 +30,7 @@ module.exports = {
     SHEET_DELETED_SUCCESS: 'Sheet deleted successfully.',
     SHEET_LOADED_SUCCESS: 'Sheet loaded into live space.',
     CATEGORY_DELETED_SUCCESS: 'Category deleted successfully.',
-    AUTO_ARCHIVE_MESSAGE: 'The previous live sheet expired and was auto-archived.'
+    AUTO_ARCHIVE_MESSAGE: 'The previous live sheet expired and was auto-archived.',
+    AUTO_DELETE_MESSAGE: 'The previous live sheet expired and was deleted.'
   }
 };

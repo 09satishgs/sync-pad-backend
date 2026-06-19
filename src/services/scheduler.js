@@ -13,11 +13,15 @@ const startScheduler = (io) => {
       const archivedResults = await sheetService.autoArchiveExpiredSheets(now);
 
       for (const result of archivedResults) {
-        console.log(`Auto-archived expired live sheet ID: ${result.oldSheetId}`);
+        if (result.archived) {
+          console.log(`Auto-archived expired live sheet ID: ${result.oldSheetId}`);
+        } else {
+          console.log(`Deleted empty expired live sheet ID: ${result.oldSheetId}`);
+        }
 
-        // Broadcast to all clients that the live sheet was auto-archived
+        // Broadcast to all clients that the live sheet was auto-archived/deleted
         io.emit('live_sheet_archived', {
-          message: MESSAGES.AUTO_ARCHIVE_MESSAGE,
+          message: result.archived ? MESSAGES.AUTO_ARCHIVE_MESSAGE : MESSAGES.AUTO_DELETE_MESSAGE,
           newLiveSheet: result.newLiveSheet
         });
 

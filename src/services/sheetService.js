@@ -168,15 +168,22 @@ class SheetService {
     const results = [];
 
     for (const sheet of expiredSheets) {
-      const timestamp = new Date(sheet.created_at).toLocaleString();
-      const title = `Auto-Archived (${timestamp})`;
+      const hasContent = sheet.content && sheet.content.trim() !== '';
 
-      await this.sheetRepository.archiveSheet(sheet.id, title, null);
+      if (hasContent) {
+        const timestamp = new Date(sheet.created_at).toLocaleString();
+        const title = `Auto-Archived (${timestamp})`;
+        await this.sheetRepository.archiveSheet(sheet.id, title, null);
+      } else {
+        await this.sheetRepository.delete(sheet.id);
+      }
+
       const newLiveSheet = await this.getOrCreateBlankLiveSheet();
 
       results.push({
         oldSheetId: sheet.id,
-        newLiveSheet
+        newLiveSheet,
+        archived: !!hasContent
       });
     }
 
