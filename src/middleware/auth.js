@@ -1,10 +1,11 @@
 const jwt = require('jsonwebtoken');
+const { ERRORS } = require('../constants/constants');
 
 const authenticate = (req, res, next) => {
   const token = req.cookies.token;
 
   if (!token) {
-    return res.status(401).json({ message: 'Unauthorized: No token provided.' });
+    return res.status(401).json({ message: ERRORS.UNAUTHORIZED_NO_TOKEN });
   }
 
   try {
@@ -13,7 +14,7 @@ const authenticate = (req, res, next) => {
     next();
   } catch (error) {
     console.error('JWT verification error:', error.message);
-    return res.status(401).json({ message: 'Unauthorized: Invalid token.' });
+    return res.status(401).json({ message: ERRORS.UNAUTHORIZED_INVALID_TOKEN });
   }
 };
 

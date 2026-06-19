@@ -4,7 +4,8 @@ const socketIo = require('socket.io');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
-const { initDb, dbRun, dbGet } = require('./config/db');
+const { initDb } = require('./config/db');
+const { sheetService } = require('./config/di');
 const authRoutes = require('./routes/auth');
 const sheetRoutes = require('./routes/sheet');
 const { startScheduler } = require('./services/scheduler');
@@ -75,7 +76,7 @@ io.on('connection', (socket) => {
       });
 
       // 2. Fetch sheet details to get the title for background notifications
-      const sheet = await dbGet("SELECT title FROM sheets WHERE id = ?", [sheetId]);
+      const sheet = await sheetService.getSheetById(sheetId);
       const title = sheet ? sheet.title : 'Untitled';
 
       // 3. Broadcast background notification to all OTHER devices NOT viewing this sheet
@@ -92,10 +93,7 @@ io.on('connection', (socket) => {
       }
 
       // 4. Persist the changes to the SQLite database
-      await dbRun(
-        "UPDATE sheets SET content = ?, type = 'txt', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-        [content, sheetId]
-      );
+      await sheetService.updateSheetContent(sheetId, content);
     } catch (err) {
       console.error('Error handling client_edit_sheet:', err);
     }

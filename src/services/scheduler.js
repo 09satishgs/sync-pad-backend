@@ -1,5 +1,5 @@
-const { dbRun, dbGet, dbAll } = require('../config/db');
-const { createBlankLiveSheet } = require('../routes/sheet');
+const { sheetService } = require('../config/di');
+const { MESSAGES } = require('../constants/constants');
 
 const startScheduler = (io) => {
   // Run check every 30 seconds
@@ -10,32 +10,15 @@ const startScheduler = (io) => {
   setInterval(async () => {
     try {
       const now = new Date().toISOString();
-      
-      // Find expired live sheets
-      const expiredSheets = await dbAll(
-        "SELECT * FROM sheets WHERE status = 'live' AND expires_at < ?",
-        [now]
-      );
+      const archivedResults = await sheetService.autoArchiveExpiredSheets(now);
 
-      for (const sheet of expiredSheets) {
-        console.log(`Auto-archiving expired live sheet ID: ${sheet.id}`);
-
-        // Update status to archived and set title to auto-archived with a date timestamp
-        const timestamp = new Date(sheet.created_at).toLocaleString();
-        const title = `Auto-Archived (${timestamp})`;
-
-        await dbRun(
-          "UPDATE sheets SET status = 'archived', title = ?, expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-          [title, sheet.id]
-        );
-
-        // Create a new blank live sheet
-        const newLiveSheet = await createBlankLiveSheet();
+      for (const result of archivedResults) {
+        console.log(`Auto-archived expired live sheet ID: ${result.oldSheetId}`);
 
         // Broadcast to all clients that the live sheet was auto-archived
         io.emit('live_sheet_archived', {
-          message: 'The previous live sheet expired and was auto-archived.',
-          newLiveSheet
+          message: MESSAGES.AUTO_ARCHIVE_MESSAGE,
+          newLiveSheet: result.newLiveSheet
         });
 
         // Also broadcast update to saved/archived list
