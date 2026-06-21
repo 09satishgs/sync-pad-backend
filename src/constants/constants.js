@@ -18,7 +18,21 @@ module.exports = {
     SHEET_NOT_FOUND: 'Sheet not found.',
     CATEGORY_NAME_REQUIRED: 'Category name is required.',
     CATEGORY_ALREADY_EXISTS: 'Category already exists.',
-    CATEGORY_NOT_FOUND: 'Category not found.'
+    CATEGORY_NOT_FOUND: 'Category not found.',
+    WORKSPACE_NAME_REQUIRED: 'Workspace name is required.',
+    WORKSPACE_NAME_TAKEN: 'Workspace name already exists.',
+    WORKSPACE_NOT_FOUND: 'Workspace not found.',
+    TARGET_USER_NOT_FOUND: 'Target user not found.',
+    USER_NOT_FOUND: 'User not found.',
+    INVALID_ACCESS_LEVEL: "Access level must be either 'member' or 'maintainer'.",
+    USER_ALREADY_MEMBER: 'User is already a member of this workspace.',
+    ROLES_PAYLOAD_MUST_BE_ARRAY: 'Roles payload must be an array.',
+    INVALID_ROLE_ITEM: "Each role must have a valid workspaceId and access ('member' or 'maintainer').",
+    UNAUTHORIZED_MAINTAINER_ONLY: 'Unauthorized: Only maintainers can add members to this workspace.',
+    UNAUTHORIZED_NO_WORKSPACE_ACCESS: 'Unauthorized: You do not have access to this workspace.',
+    FORBIDDEN_ADMIN_REQUIRED: 'Forbidden: Admin access required.',
+    UNAUTHORIZED_NOT_WORKSPACE_MEMBER: 'Unauthorized: You do not belong to this workspace.',
+    INVALID_TABLE_NAME: 'Invalid table name.'
   },
   MESSAGES: {
     USER_REGISTERED_SUCCESS: 'User registered successfully.',
@@ -31,6 +45,13 @@ module.exports = {
     SHEET_LOADED_SUCCESS: 'Sheet loaded into live space.',
     CATEGORY_DELETED_SUCCESS: 'Category deleted successfully.',
     AUTO_ARCHIVE_MESSAGE: 'The previous live sheet expired and was auto-archived.',
-    AUTO_DELETE_MESSAGE: 'The previous live sheet expired and was deleted.'
+    AUTO_DELETE_MESSAGE: 'The previous live sheet expired and was deleted.',
+    WORKSPACE_CREATED_SUCCESS: 'Workspace created and maintainer assigned successfully.',
+    USER_ADDED_TO_WORKSPACE_SUCCESS: 'User added to workspace successfully.',
+    USER_ROLES_UPDATED_SUCCESS: 'User roles updated successfully.',
+    MEMBER_ADDED_SUCCESS: 'Member added successfully.',
+    LIVE_SHEET_DELETED_SUCCESS: 'Live sheet deleted successfully.',
+    SHEET_SAVED_SUCCESS_SHORT: 'Sheet saved successfully.',
+    SHEET_ARCHIVED_SUCCESS_SHORT: 'Sheet archived successfully.'
   }
 };

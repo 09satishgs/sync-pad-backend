@@ -2,7 +2,8 @@ const express = require('express');
 const { sheetController, categoryController } = require('../config/di');
 const { authenticate } = require('../middleware/auth');
 
-const router = express.Router();
+// mergeParams is required so workspaceId from the parent router is accessible
+const router = express.Router({ mergeParams: true });
 
 // Live Sheets
 router.get('/live', authenticate, (req, res) => sheetController.getLive(req, res));

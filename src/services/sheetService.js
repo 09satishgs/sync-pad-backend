@@ -1,43 +1,52 @@
 const { ERRORS, MESSAGES } = require('../constants/constants');
 
 class SheetService {
-  constructor(sheetRepository, categoryRepository) {
+  constructor(sheetRepository, categoryRepository, workspaceService) {
     this.sheetRepository = sheetRepository;
     this.categoryRepository = categoryRepository;
+    this.workspaceService = workspaceService;
   }
 
-  async getOrCreateBlankLiveSheet() {
+  async getOrCreateBlankLiveSheet(workspaceId) {
     const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours
-    return await this.sheetRepository.createLive(expiresAt);
+    return await this.sheetRepository.createLive(workspaceId, expiresAt);
   }
 
-  async getLiveOrCreate() {
-    const liveSheet = await this.sheetRepository.findLive();
+  async getLiveOrCreate(workspaceId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
     if (!liveSheet) {
-      return await this.getOrCreateBlankLiveSheet();
+      return await this.getOrCreateBlankLiveSheet(workspaceId);
     }
     return liveSheet;
   }
 
-  async updateLiveContent(content) {
+  async updateLiveContent(workspaceId, content, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     if (content === undefined) {
       const error = new Error(ERRORS.CONTENT_REQUIRED);
       error.status = 400;
       throw error;
     }
 
-    const liveSheet = await this.getLiveOrCreate();
-    return await this.sheetRepository.updateContent(liveSheet.id, content);
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
+    const targetSheet = liveSheet || await this.getOrCreateBlankLiveSheet(workspaceId);
+
+    return await this.sheetRepository.updateContent(targetSheet.id, content);
   }
 
-  async saveLiveSheet(title, categoryId) {
+  async saveLiveSheet(workspaceId, title, categoryId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     if (!title) {
       const error = new Error(ERRORS.TITLE_REQUIRED_TO_SAVE);
       error.status = 400;
       throw error;
     }
 
-    const liveSheet = await this.sheetRepository.findLive();
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
     if (!liveSheet) {
       const error = new Error(ERRORS.NO_ACTIVE_LIVE_SHEET_TO_SAVE);
       error.status = 400;
@@ -45,22 +54,22 @@ class SheetService {
     }
 
     await this.sheetRepository.saveSheet(liveSheet.id, title, categoryId);
-    const newLiveSheet = await this.getOrCreateBlankLiveSheet();
 
     return {
-      savedSheetId: liveSheet.id,
-      newLiveSheet
+      savedSheetId: liveSheet.id
     };
   }
 
-  async archiveLiveSheet(title, categoryId) {
+  async archiveLiveSheet(workspaceId, title, categoryId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     if (!title) {
       const error = new Error(ERRORS.TITLE_REQUIRED_TO_ARCHIVE);
       error.status = 400;
       throw error;
     }
 
-    const liveSheet = await this.sheetRepository.findLive();
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
     if (!liveSheet) {
       const error = new Error(ERRORS.NO_ACTIVE_LIVE_SHEET_TO_ARCHIVE);
       error.status = 400;
@@ -68,31 +77,36 @@ class SheetService {
     }
 
     await this.sheetRepository.archiveSheet(liveSheet.id, title, categoryId);
-    const newLiveSheet = await this.getOrCreateBlankLiveSheet();
 
     return {
-      archivedSheetId: liveSheet.id,
-      newLiveSheet
+      archivedSheetId: liveSheet.id
     };
   }
 
-  async deleteLiveSheet() {
-    const liveSheet = await this.sheetRepository.findLive();
+  async deleteLiveSheet(workspaceId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
     if (liveSheet) {
       await this.sheetRepository.delete(liveSheet.id);
     }
-    return await this.getOrCreateBlankLiveSheet();
+
+    return { message: MESSAGES.LIVE_SHEET_DELETED_SUCCESS };
   }
 
-  async getSavedSheets() {
-    return await this.sheetRepository.findSaved();
+  async getSavedSheets(workspaceId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+    return await this.sheetRepository.findSaved(workspaceId);
   }
 
-  async getArchivedSheets() {
-    return await this.sheetRepository.findArchived();
+  async getArchivedSheets(workspaceId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+    return await this.sheetRepository.findArchived(workspaceId);
   }
 
-  async updateSavedSheet(id, { title, content, categoryId, loadedAt, force }) {
+  async updateSavedSheet(workspaceId, id, { title, content, categoryId, loadedAt, force }, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     if (!title) {
       const error = new Error(ERRORS.TITLE_REQUIRED);
       error.status = 400;
@@ -100,7 +114,7 @@ class SheetService {
     }
 
     const sheet = await this.sheetRepository.findById(id);
-    if (!sheet || sheet.status !== 'saved') {
+    if (!sheet || sheet.workspace_id !== Number(workspaceId) || sheet.status !== 'saved') {
       const error = new Error(ERRORS.SAVED_SHEET_NOT_FOUND);
       error.status = 404;
       throw error;
@@ -111,7 +125,6 @@ class SheetService {
       const dbTime = new Date(sheet.updated_at).getTime();
       const clientTime = new Date(loadedAt).getTime();
       
-      // If server version is newer by > 1.5 seconds, flag a concurrency conflict
       if (dbTime - clientTime > 1500) {
         const error = new Error(ERRORS.CONFLICT_DETECTED);
         error.status = 409;
@@ -127,9 +140,11 @@ class SheetService {
     return await this.sheetRepository.updateSavedSheet(id, title, updatedContent, updatedCategoryId);
   }
 
-  async deleteSheet(id) {
+  async deleteSheet(workspaceId, id, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     const sheet = await this.sheetRepository.findSavedOrArchivedById(id);
-    if (!sheet) {
+    if (!sheet || sheet.workspace_id !== Number(workspaceId)) {
       const error = new Error(ERRORS.SHEET_NOT_FOUND);
       error.status = 404;
       throw error;
@@ -139,16 +154,20 @@ class SheetService {
     return { message: MESSAGES.SHEET_DELETED_SUCCESS };
   }
 
-  async loadSheetIntoLive(id) {
+  async loadSheetIntoLive(workspaceId, id, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
     const savedSheet = await this.sheetRepository.findSavedOrArchivedById(id);
-    if (!savedSheet) {
+    if (!savedSheet || savedSheet.workspace_id !== Number(workspaceId)) {
       const error = new Error(ERRORS.SAVED_SHEET_NOT_FOUND);
       error.status = 404;
       throw error;
     }
 
-    const liveSheet = await this.getLiveOrCreate();
-    const updatedLiveSheet = await this.sheetRepository.updateContent(liveSheet.id, savedSheet.content);
+    const liveSheet = await this.sheetRepository.findLive(workspaceId);
+    const targetSheet = liveSheet || await this.getOrCreateBlankLiveSheet(workspaceId);
+
+    const updatedLiveSheet = await this.sheetRepository.updateContent(targetSheet.id, savedSheet.content);
 
     return {
       liveSheet: updatedLiveSheet
@@ -178,11 +197,12 @@ class SheetService {
         await this.sheetRepository.delete(sheet.id);
       }
 
-      const newLiveSheet = await this.getOrCreateBlankLiveSheet();
+      // NO automatic recreation of the live sheet here.
+      // Generation is deferred to the next user retrieval request.
 
       results.push({
         oldSheetId: sheet.id,
-        newLiveSheet,
+        workspaceId: sheet.workspace_id,
         archived: !!hasContent
       });
     }

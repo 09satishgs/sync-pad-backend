@@ -15,14 +15,14 @@ const {
 } = require('../constants/queries');
 
 class SheetRepository {
-  async findLive() {
-    return await dbGet(FIND_LIVE_SHEET);
+  async findLive(workspaceId) {
+    return await dbGet(FIND_LIVE_SHEET, [workspaceId]);
   }
 
-  async createLive(expiresAt) {
+  async createLive(workspaceId, expiresAt) {
     const result = await dbRun(
       CREATE_LIVE_SHEET,
-      ['Live Sheet', '', 'txt', 'live', expiresAt]
+      ['Live Sheet', '', 'txt', 'live', expiresAt, workspaceId]
     );
     return await this.findById(result.id);
   }
@@ -46,12 +46,12 @@ class SheetRepository {
     return await dbRun(DELETE_SHEET, [id]);
   }
 
-  async findSaved() {
-    return await dbAll(FIND_SAVED_SHEETS);
+  async findSaved(workspaceId) {
+    return await dbAll(FIND_SAVED_SHEETS, [workspaceId]);
   }
 
-  async findArchived() {
-    return await dbAll(FIND_ARCHIVED_SHEETS);
+  async findArchived(workspaceId) {
+    return await dbAll(FIND_ARCHIVED_SHEETS, [workspaceId]);
   }
 
   async findById(id) {

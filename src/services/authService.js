@@ -3,8 +3,9 @@ const jwt = require('jsonwebtoken');
 const { ERRORS, MESSAGES } = require('../constants/constants');
 
 class AuthService {
-  constructor(userRepository) {
+  constructor(userRepository, workspaceRepository) {
     this.userRepository = userRepository;
+    this.workspaceRepository = workspaceRepository;
   }
 
   async register(username, password) {
@@ -49,15 +50,19 @@ class AuthService {
       throw error;
     }
 
+    // Fetch user roles details
+    const roleIds = user.role_ids ? user.role_ids.split(',').map(Number) : [];
+    const roles = await this.workspaceRepository.findRolesByIds(roleIds);
+
     const token = jwt.sign(
-      { id: user.id, username: user.username },
+      { id: user.id, username: user.username, roles },
       process.env.JWT_SECRET || 'dev_jwt_secret_key_sync_pad_12345',
       { expiresIn: '30d' }
     );
 
     return {
       token,
-      user: { id: user.id, username: user.username }
+      user: { id: user.id, username: user.username, roles }
     };
   }
 }

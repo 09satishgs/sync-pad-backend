@@ -8,20 +8,20 @@ const {
 } = require('../constants/queries');
 
 class CategoryRepository {
-  async findAll() {
-    return await dbAll(FIND_ALL_CATEGORIES);
+  async findAll(workspaceId) {
+    return await dbAll(FIND_ALL_CATEGORIES, [workspaceId]);
   }
 
-  async findByName(name) {
-    return await dbGet(FIND_CATEGORY_BY_NAME, [name]);
+  async findByName(name, workspaceId) {
+    return await dbGet(FIND_CATEGORY_BY_NAME, [name, workspaceId]);
   }
 
   async findById(id) {
     return await dbGet(FIND_CATEGORY_BY_ID, [id]);
   }
 
-  async create(name) {
-    const result = await dbRun(CREATE_CATEGORY, [name]);
+  async create(name, workspaceId) {
+    const result = await dbRun(CREATE_CATEGORY, [name, workspaceId]);
     return await this.findById(result.id);
   }
 

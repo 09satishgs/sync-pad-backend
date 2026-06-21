@@ -6,8 +6,9 @@ class CategoryController {
   }
 
   async getAll(req, res) {
+    const { workspaceId } = req.params;
     try {
-      const categories = await this.categoryService.getCategories();
+      const categories = await this.categoryService.getCategories(workspaceId, req.user.roles || []);
       return res.json(categories);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -18,9 +19,10 @@ class CategoryController {
   }
 
   async create(req, res) {
+    const { workspaceId } = req.params;
     const { name } = req.body;
     try {
-      const newCategory = await this.categoryService.createCategory(name);
+      const newCategory = await this.categoryService.createCategory(name, workspaceId, req.user.roles || []);
       return res.status(201).json(newCategory);
     } catch (error) {
       console.error('Error creating category:', error);
@@ -31,9 +33,9 @@ class CategoryController {
   }
 
   async delete(req, res) {
-    const { id } = req.params;
+    const { workspaceId, id } = req.params;
     try {
-      const result = await this.categoryService.deleteCategory(id);
+      const result = await this.categoryService.deleteCategory(id, workspaceId, req.user.roles || []);
       return res.json(result);
     } catch (error) {
       console.error('Error deleting category:', error);

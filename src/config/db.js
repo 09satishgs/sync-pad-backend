@@ -4,6 +4,14 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
+const {
+  CREATE_USERS_TABLE,
+  CREATE_WORKSPACES_TABLE,
+  CREATE_ROLES_TABLE,
+  CREATE_CATEGORIES_TABLE,
+  CREATE_SHEETS_TABLE
+} = require('../constants/queries');
+
 const dbPath = path.resolve(__dirname, '../../', process.env.DATABASE_URL || 'database.db');
 console.log(`Connecting to SQLite database at: ${dbPath}`);
 
@@ -51,51 +59,14 @@ const initDb = async () => {
     // Enable foreign keys
     await dbRun('PRAGMA foreign_keys = ON');
 
-    // Create users table
-    await dbRun(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        username TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
+    // Create tables using imported queries
+    await dbRun(CREATE_USERS_TABLE);
+    await dbRun(CREATE_WORKSPACES_TABLE);
+    await dbRun(CREATE_ROLES_TABLE);
+    await dbRun(CREATE_CATEGORIES_TABLE);
+    await dbRun(CREATE_SHEETS_TABLE);
 
-    // Create categories table
-    await dbRun(`
-      CREATE TABLE IF NOT EXISTS categories (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Create sheets table
-    await dbRun(`
-      CREATE TABLE IF NOT EXISTS sheets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        content TEXT,
-        type TEXT NOT NULL DEFAULT 'txt',
-        status TEXT NOT NULL DEFAULT 'live',
-        category_id INTEGER,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        expires_at DATETIME,
-        FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL
-      )
-    `);
-
-    // Ensure there is at least one active live sheet
-    const liveSheet = await dbGet("SELECT * FROM sheets WHERE status = 'live'");
-    if (!liveSheet) {
-      const expiresAt = new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(); // 2 hours
-      await dbRun(
-        "INSERT INTO sheets (title, content, type, status, expires_at) VALUES (?, ?, ?, ?, ?)",
-        ['Live Sheet', '', 'txt', 'live', expiresAt]
-      );
-      console.log('Initialized default live sheet.');
-    }
+    console.log('Database tables recreated successfully.');
   } catch (error) {
     console.error('Error initializing database tables:', error);
   }
