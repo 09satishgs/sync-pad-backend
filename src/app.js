@@ -34,9 +34,9 @@ app.use((req, res, next) => {
 });
 
 // Mount REST Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/workspaces", workspaceRoutes);
-app.use("/api/workspaces/:workspaceId/sheets", sheetRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/syncpad/api/auth", authRoutes);
+app.use("/syncpad/api/workspaces", workspaceRoutes);
+app.use("/syncpad/api/workspaces/:workspaceId/sheets", sheetRoutes);
+app.use("/syncpad/api/admin", adminRoutes);
 
 module.exports = app;
