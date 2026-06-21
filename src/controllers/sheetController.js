@@ -157,6 +157,25 @@ class SheetController {
       return res.status(status).json({ message });
     }
   }
+
+  async createSaved(req, res) {
+    const { workspaceId } = req.params;
+    const { title, category_id } = req.body;
+    try {
+      const newSheet = await this.sheetService.createSavedSheet(
+        workspaceId,
+        title,
+        category_id,
+        req.user.roles || []
+      );
+      return res.status(201).json(newSheet);
+    } catch (error) {
+      console.error('Error creating saved sheet:', error);
+      const status = error.status || 500;
+      const message = status === 500 ? ERRORS.INTERNAL_SERVER_ERROR : error.message;
+      return res.status(status).json({ message });
+    }
+  }
 }
 
 module.exports = SheetController;

@@ -8,5 +8,6 @@ router.post('/register', (req, res) => authController.register(req, res));
 router.post('/login', (req, res) => authController.login(req, res));
 router.post('/logout', (req, res) => authController.logout(req, res));
 router.get('/session', authenticate, (req, res) => authController.session(req, res));
+router.post('/session/refresh', authenticate, (req, res) => authController.refreshSession(req, res));
 
 module.exports = router;

@@ -14,6 +14,7 @@ router.post('/delete-live', authenticate, (req, res) => sheetController.deleteLi
 
 // Saved Sheets
 router.get('/saved', authenticate, (req, res) => sheetController.getSaved(req, res));
+router.post('/saved', authenticate, (req, res) => sheetController.createSaved(req, res));
 router.get('/archived', authenticate, (req, res) => sheetController.getArchived(req, res));
 router.put('/saved/:id', authenticate, (req, res) => sheetController.updateSaved(req, res));
 router.delete('/saved/:id', authenticate, (req, res) => sheetController.deleteSaved(req, res));

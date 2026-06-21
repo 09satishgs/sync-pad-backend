@@ -11,7 +11,8 @@ const {
   FIND_SHEET_BY_ID,
   FIND_SAVED_OR_ARCHIVED_SHEET_BY_ID,
   UPDATE_SAVED_SHEET,
-  FIND_EXPIRED_LIVE_SHEETS
+  FIND_EXPIRED_LIVE_SHEETS,
+  CREATE_SAVED_SHEET
 } = require('../constants/queries');
 
 class SheetRepository {
@@ -69,6 +70,14 @@ class SheetRepository {
 
   async findExpiredLive(now) {
     return await dbAll(FIND_EXPIRED_LIVE_SHEETS, [now]);
+  }
+
+  async createSaved(title, categoryId, workspaceId) {
+    const result = await dbRun(
+      CREATE_SAVED_SHEET,
+      [title, '', categoryId || null, workspaceId]
+    );
+    return await this.findById(result.id);
   }
 }
 

@@ -209,6 +209,18 @@ class SheetService {
 
     return results;
   }
+
+  async createSavedSheet(workspaceId, title, categoryId, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
+    if (!title) {
+      const error = new Error(ERRORS.TITLE_REQUIRED);
+      error.status = 400;
+      throw error;
+    }
+
+    return await this.sheetRepository.createSaved(title, categoryId, workspaceId);
+  }
 }
 
 module.exports = SheetService;

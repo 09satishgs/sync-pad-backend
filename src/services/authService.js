@@ -65,6 +65,29 @@ class AuthService {
       user: { id: user.id, username: user.username, roles }
     };
   }
+
+  async refreshSession(userId) {
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      const error = new Error(ERRORS.USER_NOT_FOUND);
+      error.status = 404;
+      throw error;
+    }
+
+    const roleIds = user.role_ids ? user.role_ids.split(',').map(Number) : [];
+    const roles = await this.workspaceRepository.findRolesByIds(roleIds);
+
+    const token = jwt.sign(
+      { id: user.id, username: user.username, roles },
+      process.env.JWT_SECRET || 'dev_jwt_secret_key_sync_pad_12345',
+      { expiresIn: '30d' }
+    );
+
+    return {
+      token,
+      user: { id: user.id, username: user.username, roles }
+    };
+  }
 }
 
 module.exports = AuthService;

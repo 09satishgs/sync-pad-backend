@@ -47,6 +47,8 @@ module.exports = {
   FIND_SAVED_OR_ARCHIVED_SHEET_BY_ID: "SELECT * FROM sheets WHERE id = ? AND (status = 'saved' OR status = 'archived')",
   UPDATE_SAVED_SHEET: "UPDATE sheets SET title = ?, content = ?, type = 'txt', category_id = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
   FIND_EXPIRED_LIVE_SHEETS: "SELECT * FROM sheets WHERE status = 'live' AND expires_at < ?",
+  CREATE_SAVED_SHEET: "INSERT INTO sheets (title, content, type, status, category_id, workspace_id) VALUES (?, ?, 'txt', 'saved', ?, ?)",
+
 
   // Categories Queries (workspace scoped)
   FIND_ALL_CATEGORIES: "SELECT * FROM categories WHERE workspace_id = ? ORDER BY name ASC",

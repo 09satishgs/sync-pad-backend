@@ -52,6 +52,7 @@ module.exports = {
     MEMBER_ADDED_SUCCESS: 'Member added successfully.',
     LIVE_SHEET_DELETED_SUCCESS: 'Live sheet deleted successfully.',
     SHEET_SAVED_SUCCESS_SHORT: 'Sheet saved successfully.',
-    SHEET_ARCHIVED_SUCCESS_SHORT: 'Sheet archived successfully.'
+    SHEET_ARCHIVED_SUCCESS_SHORT: 'Sheet archived successfully.',
+    SESSION_REFRESH_SUCCESS: 'Session token refreshed.'
   }
 };
