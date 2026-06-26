@@ -6,6 +6,7 @@ const sheetRoutes = require("./routes/sheet");
 const workspaceRoutes = require("./routes/workspace");
 const adminRoutes = require("./routes/admin");
 const fileRoutes = require("./routes/file");
+const { dbGet } = require("./config/db");
 
 const app = express();
 
@@ -40,5 +41,31 @@ app.use("/syncpad/api/workspaces", workspaceRoutes);
 app.use("/syncpad/api/workspaces/:workspaceId/sheets", sheetRoutes);
 app.use("/syncpad/api/workspaces/:workspaceId/files", fileRoutes);
 app.use("/syncpad/api/admin", adminRoutes);
+
+app.get("/syncpad/api/db/health", async (req, res) => {
+  try {
+    // Ping SQLite DB with a simple query
+    await dbGet("SELECT 1");
+    return res.json({
+      status: "healthy",
+      timestamp: new Date().toISOString(),
+      services: {
+        server: "up",
+        database: "connected",
+      },
+    });
+  } catch (error) {
+    console.error("Health check failure:", error);
+    return res.status(500).json({
+      status: "unhealthy",
+      timestamp: new Date().toISOString(),
+      services: {
+        server: "up",
+        database: "error",
+      },
+      error: error.message,
+    });
+  }
+});
 
 module.exports = app;
