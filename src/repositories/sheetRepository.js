@@ -38,8 +38,8 @@ class SheetRepository {
     return await this.findById(id);
   }
 
-  async archiveSheet(id, title, categoryId) {
-    await dbRun(ARCHIVE_SHEET, [title, categoryId || null, id]);
+  async archiveSheet(id, title, filePath, categoryId) {
+    await dbRun(ARCHIVE_SHEET, [title, filePath || null, categoryId || null, id]);
     return await this.findById(id);
   }
 

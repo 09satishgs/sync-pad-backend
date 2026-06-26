@@ -27,7 +27,7 @@ module.exports = {
   CREATE_LIVE_SHEET: "INSERT INTO sheets (title, content, type, status, expires_at, workspace_id) VALUES (?, ?, ?, ?, ?, ?)",
   UPDATE_SHEET_CONTENT: "UPDATE sheets SET content = ?, type = 'txt', updated_at = CURRENT_TIMESTAMP WHERE id = ?",
   SAVE_SHEET: "UPDATE sheets SET title = ?, status = 'saved', category_id = ?, expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
-  ARCHIVE_SHEET: "UPDATE sheets SET title = ?, status = 'archived', category_id = ?, expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+  ARCHIVE_SHEET: "UPDATE sheets SET title = ?, content = NULL, file_path = ?, status = 'archived', category_id = ?, expires_at = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
   DELETE_SHEET: "DELETE FROM sheets WHERE id = ?",
   FIND_SAVED_SHEETS: `
     SELECT s.*, c.name as category_name 
@@ -102,6 +102,7 @@ module.exports = {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       title TEXT NOT NULL,
       content TEXT,
+      file_path TEXT DEFAULT NULL,
       type TEXT NOT NULL DEFAULT 'txt',
       status TEXT NOT NULL DEFAULT 'live',
       category_id INTEGER,
@@ -112,5 +113,25 @@ module.exports = {
       FOREIGN KEY (category_id) REFERENCES categories (id) ON DELETE SET NULL,
       FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
     )
-  `
+  `,
+  CREATE_WORKSPACE_FILES_TABLE: `
+    CREATE TABLE IF NOT EXISTS workspace_files (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      filename TEXT NOT NULL,
+      original_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      mime_type TEXT,
+      size_bytes INTEGER,
+      workspace_id INTEGER NOT NULL,
+      uploader_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE,
+      FOREIGN KEY (uploader_id) REFERENCES users (id) ON DELETE SET NULL
+    )
+  `,
+  ALTER_SHEETS_ADD_FILE_PATH: "ALTER TABLE sheets ADD COLUMN file_path TEXT DEFAULT NULL",
+  CREATE_WORKSPACE_FILE: "INSERT INTO workspace_files (filename, original_name, file_path, mime_type, size_bytes, workspace_id, uploader_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+  FIND_WORKSPACE_FILES_FOR_WORKSPACE: "SELECT wf.*, u.username as uploader_username FROM workspace_files wf LEFT JOIN users u ON wf.uploader_id = u.id WHERE wf.workspace_id = ? ORDER BY wf.created_at DESC",
+  FIND_WORKSPACE_FILE_BY_ID: "SELECT * FROM workspace_files WHERE id = ?",
+  DELETE_WORKSPACE_FILE: "DELETE FROM workspace_files WHERE id = ?"
 };

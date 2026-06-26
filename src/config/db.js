@@ -9,7 +9,9 @@ const {
   CREATE_WORKSPACES_TABLE,
   CREATE_ROLES_TABLE,
   CREATE_CATEGORIES_TABLE,
-  CREATE_SHEETS_TABLE
+  CREATE_SHEETS_TABLE,
+  CREATE_WORKSPACE_FILES_TABLE,
+  ALTER_SHEETS_ADD_FILE_PATH
 } = require('../constants/queries');
 
 const dbPath = path.resolve(__dirname, '../../', process.env.DATABASE_URL || 'database.db');
@@ -65,6 +67,15 @@ const initDb = async () => {
     await dbRun(CREATE_ROLES_TABLE);
     await dbRun(CREATE_CATEGORIES_TABLE);
     await dbRun(CREATE_SHEETS_TABLE);
+    await dbRun(CREATE_WORKSPACE_FILES_TABLE);
+
+    // Dynamic schema migration: add file_path column to sheets if not exists
+    const columns = await dbAll("PRAGMA table_info(sheets)");
+    const hasFilePath = columns.some(c => c.name === 'file_path');
+    if (!hasFilePath) {
+      await dbRun(ALTER_SHEETS_ADD_FILE_PATH);
+      console.log('Database schema migrated: added file_path to sheets table.');
+    }
 
     console.log('Database tables recreated successfully.');
   } catch (error) {

@@ -52,8 +52,16 @@ class SheetController {
   async archiveLive(req, res) {
     const { workspaceId } = req.params;
     const { title, category_id } = req.body;
+    const file = req.file;
     try {
-      const result = await this.sheetService.archiveLiveSheet(workspaceId, title, category_id, req.user.roles || []);
+      const fileContent = file ? file.buffer.toString('utf-8') : null;
+      const result = await this.sheetService.archiveLiveSheet(
+        workspaceId,
+        title,
+        category_id,
+        fileContent,
+        req.user.roles || []
+      );
       return res.json({
         message: MESSAGES.SHEET_ARCHIVED_SUCCESS_SHORT,
         archivedSheetId: result.archivedSheetId
@@ -86,6 +94,19 @@ class SheetController {
       return res.json(sheets);
     } catch (error) {
       console.error('Error fetching saved sheets:', error);
+      const status = error.status || 500;
+      const message = status === 500 ? ERRORS.INTERNAL_SERVER_ERROR : error.message;
+      return res.status(status).json({ message });
+    }
+  }
+
+  async getSavedDetail(req, res) {
+    const { workspaceId, id } = req.params;
+    try {
+      const sheet = await this.sheetService.getSavedSheetDetail(workspaceId, id, req.user.roles || []);
+      return res.json(sheet);
+    } catch (error) {
+      console.error('Error fetching sheet detail:', error);
       const status = error.status || 500;
       const message = status === 500 ? ERRORS.INTERNAL_SERVER_ERROR : error.message;
       return res.status(status).json({ message });

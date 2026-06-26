@@ -25,9 +25,15 @@ const startScheduler = (io) => {
           newLiveSheet: null,
           workspaceId: result.workspaceId
         });
+        io.of('/syncpad').emit('live_sheet_archived', {
+          message: result.archived ? MESSAGES.AUTO_ARCHIVE_MESSAGE : MESSAGES.AUTO_DELETE_MESSAGE,
+          newLiveSheet: null,
+          workspaceId: result.workspaceId
+        });
 
         // Also broadcast update to saved/archived list
         io.emit('sheets_list_updated');
+        io.of('/syncpad').emit('sheets_list_updated');
       }
     } catch (error) {
       console.error('Error in auto-archiver scheduler:', error);

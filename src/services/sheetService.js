@@ -1,10 +1,11 @@
 const { ERRORS, MESSAGES } = require('../constants/constants');
 
 class SheetService {
-  constructor(sheetRepository, categoryRepository, workspaceService) {
+  constructor(sheetRepository, categoryRepository, workspaceService, fileStorageService) {
     this.sheetRepository = sheetRepository;
     this.categoryRepository = categoryRepository;
     this.workspaceService = workspaceService;
+    this.fileStorageService = fileStorageService;
   }
 
   async getOrCreateBlankLiveSheet(workspaceId) {
@@ -60,7 +61,7 @@ class SheetService {
     };
   }
 
-  async archiveLiveSheet(workspaceId, title, categoryId, requesterRoles) {
+  async archiveLiveSheet(workspaceId, title, categoryId, fileContent, requesterRoles) {
     this.workspaceService.checkAccess(workspaceId, requesterRoles);
 
     if (!title) {
@@ -76,7 +77,9 @@ class SheetService {
       throw error;
     }
 
-    await this.sheetRepository.archiveSheet(liveSheet.id, title, categoryId);
+    const archiveContent = fileContent !== null ? fileContent : (liveSheet.content || '');
+    const filePath = await this.fileStorageService.saveArchive(workspaceId, liveSheet.id, archiveContent);
+    await this.sheetRepository.archiveSheet(liveSheet.id, title, filePath, categoryId);
 
     return {
       archivedSheetId: liveSheet.id
@@ -97,6 +100,27 @@ class SheetService {
   async getSavedSheets(workspaceId, requesterRoles) {
     this.workspaceService.checkAccess(workspaceId, requesterRoles);
     return await this.sheetRepository.findSaved(workspaceId);
+  }
+
+  async getSavedSheetDetail(workspaceId, id, requesterRoles) {
+    this.workspaceService.checkAccess(workspaceId, requesterRoles);
+
+    const sheet = await this.sheetRepository.findSavedOrArchivedById(id);
+    if (!sheet || sheet.workspace_id !== Number(workspaceId)) {
+      const error = new Error(ERRORS.SAVED_SHEET_NOT_FOUND);
+      error.status = 404;
+      throw error;
+    }
+
+    let content = sheet.content;
+    if (sheet.status === 'archived' && sheet.file_path) {
+      content = await this.fileStorageService.readArchive(sheet.file_path);
+    }
+
+    return {
+      ...sheet,
+      content
+    };
   }
 
   async getArchivedSheets(workspaceId, requesterRoles) {
@@ -150,6 +174,10 @@ class SheetService {
       throw error;
     }
 
+    if (sheet.status === 'archived' && sheet.file_path) {
+      await this.fileStorageService.deleteFile(sheet.file_path);
+    }
+
     await this.sheetRepository.delete(id);
     return { message: MESSAGES.SHEET_DELETED_SUCCESS };
   }
@@ -164,10 +192,15 @@ class SheetService {
       throw error;
     }
 
+    let content = savedSheet.content;
+    if (savedSheet.status === 'archived' && savedSheet.file_path) {
+      content = await this.fileStorageService.readArchive(savedSheet.file_path);
+    }
+
     const liveSheet = await this.sheetRepository.findLive(workspaceId);
     const targetSheet = liveSheet || await this.getOrCreateBlankLiveSheet(workspaceId);
 
-    const updatedLiveSheet = await this.sheetRepository.updateContent(targetSheet.id, savedSheet.content);
+    const updatedLiveSheet = await this.sheetRepository.updateContent(targetSheet.id, content || '');
 
     return {
       liveSheet: updatedLiveSheet
@@ -192,7 +225,8 @@ class SheetService {
       if (hasContent) {
         const timestamp = new Date(sheet.created_at).toLocaleString();
         const title = `Auto-Archived (${timestamp})`;
-        await this.sheetRepository.archiveSheet(sheet.id, title, null);
+        const filePath = await this.fileStorageService.saveArchive(sheet.workspace_id, sheet.id, sheet.content || '');
+        await this.sheetRepository.archiveSheet(sheet.id, title, filePath, null);
       } else {
         await this.sheetRepository.delete(sheet.id);
       }

@@ -5,6 +5,7 @@ const authRoutes = require("./routes/auth");
 const sheetRoutes = require("./routes/sheet");
 const workspaceRoutes = require("./routes/workspace");
 const adminRoutes = require("./routes/admin");
+const fileRoutes = require("./routes/file");
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use((req, res, next) => {
 app.use("/syncpad/api/auth", authRoutes);
 app.use("/syncpad/api/workspaces", workspaceRoutes);
 app.use("/syncpad/api/workspaces/:workspaceId/sheets", sheetRoutes);
+app.use("/syncpad/api/workspaces/:workspaceId/files", fileRoutes);
 app.use("/syncpad/api/admin", adminRoutes);
 
 module.exports = app;

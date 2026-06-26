@@ -32,7 +32,9 @@ module.exports = {
     UNAUTHORIZED_NO_WORKSPACE_ACCESS: 'Unauthorized: You do not have access to this workspace.',
     FORBIDDEN_ADMIN_REQUIRED: 'Forbidden: Admin access required.',
     UNAUTHORIZED_NOT_WORKSPACE_MEMBER: 'Unauthorized: You do not belong to this workspace.',
-    INVALID_TABLE_NAME: 'Invalid table name.'
+    INVALID_TABLE_NAME: 'Invalid table name.',
+    FILE_NOT_FOUND: 'File not found.',
+    FILE_REQUIRED: 'File is required.'
   },
   MESSAGES: {
     USER_REGISTERED_SUCCESS: 'User registered successfully.',
@@ -53,6 +55,8 @@ module.exports = {
     LIVE_SHEET_DELETED_SUCCESS: 'Live sheet deleted successfully.',
     SHEET_SAVED_SUCCESS_SHORT: 'Sheet saved successfully.',
     SHEET_ARCHIVED_SUCCESS_SHORT: 'Sheet archived successfully.',
-    SESSION_REFRESH_SUCCESS: 'Session token refreshed.'
+    SESSION_REFRESH_SUCCESS: 'Session token refreshed.',
+    FILE_DELETED_SUCCESS: 'File deleted successfully.',
+    FILE_UPLOADED_SUCCESS: 'File uploaded successfully.'
   }
 };
